@@ -1,20 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../../servicios/auth.service';
 import { Router } from '@angular/router';
+
+import { Store } from '@ngrx/store';
+import { AppState } from '../../app.reducer';
+
+
 import Swal from 'sweetalert2';
+import * as ui from '../../shared/ui.actions';
+import { Subscription } from 'rxjs';
+
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styles: []
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
 
   loginForm: FormGroup;
+  cargando: boolean = false;
+  uiSubscription: Subscription;
 
   constructor(private fb: FormBuilder,
               private authService: AuthService,
+              private store: Store<AppState>,
               private router: Router) { }
 
   ngOnInit(): void {
@@ -25,22 +36,36 @@ export class LoginComponent implements OnInit {
       password: ['', Validators.required],
 
     });
+
+    this.uiSubscription =  this.store.select('ui').subscribe( ui => {
+      this.cargando = ui.isLoading;
+      console.log('cargando subs');
+    });
   }
+
+  ngOnDestroy(): void {
+
+    this.uiSubscription.unsubscribe();
+
+  }
+
 
   loginUsuario(){
     console.log(this.loginForm.value);
 
     if (this.loginForm.invalid) { return; }
 
-    Swal.fire({
+    this.store.dispatch( ui.isLoading() );
 
-      title: 'Espere por favor',
-      allowOutsideClick: false,
-      onBeforeOpen: () => {
-        Swal.showLoading();
-      }
+    // Swal.fire({
 
-    });
+    //   title: 'Espere por favor',
+    //   allowOutsideClick: false,
+    //   onBeforeOpen: () => {
+    //     Swal.showLoading();
+    //   }
+
+    // });
 
 
     const { correo, password } = this.loginForm.value;
@@ -48,18 +73,20 @@ export class LoginComponent implements OnInit {
     this.authService.autenticarUsuario(correo, password)
       .then( credenciales => {
        // console.log(credenciales);
-        Swal.close();
+        //Swal.close();
+        this.store.dispatch( ui.stopLoading());
         this.router.navigate(['/']);
       })
       .catch( err => {
      //   console.error(err);
-        Swal.close();
-        Swal.fire({
-          icon: 'error',
-          title: 'Ingresos y Egresos',
-          text: err.message
+     //   Swal.close();
+          this.store.dispatch( ui.stopLoading());
+          Swal.fire({
+            icon: 'error',
+            title: 'Ingresos y Egresos',
+            text: err.message
+          });
         });
-      });
   }
 
 }

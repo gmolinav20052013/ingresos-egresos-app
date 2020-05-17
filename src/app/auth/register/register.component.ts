@@ -1,8 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../../servicios/auth.service';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
+import { Store } from '@ngrx/store';
+import { AppState } from '../../app.reducer';
+import { Subscription } from 'rxjs';
+import * as ui from '../../shared/ui.actions';
 
 @Component({
   selector: 'app-register',
@@ -12,9 +16,12 @@ import Swal from 'sweetalert2';
 export class RegisterComponent implements OnInit {
 
   registroForm: FormGroup;
+  cargando: boolean = false;
+  uiSubscription: Subscription;
 
   constructor(private fb: FormBuilder,
               private authService: AuthService,
+              private store: Store<AppState>,
               private router: Router) { }
 
   ngOnInit(): void {
@@ -25,6 +32,14 @@ export class RegisterComponent implements OnInit {
       password: [ '', Validators.required]
     });
 
+    this.uiSubscription = this.store.select('ui').subscribe( ui => {
+      this.cargando = ui.isLoading;
+      console.log('cargando subs registro');
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.uiSubscription.unsubscribe();
   }
 
   crearUsuario() {
@@ -32,16 +47,18 @@ export class RegisterComponent implements OnInit {
 
       if (this.registroForm.invalid) { return; }
 
-      Swal.fire({
+      // Swal.fire({
 
-        title: 'Espere por favor',
-        allowOutsideClick: false,
-        onBeforeOpen: () => {
-          Swal.showLoading();
-        }
+      //   title: 'Espere por favor',
+      //   allowOutsideClick: false,
+      //   onBeforeOpen: () => {
+      //     Swal.showLoading();
+      //   }
 
-      });
+      // });
 
+
+      this.store.dispatch(ui.isLoading());
 
 
       const { nombre, correo, password } = this.registroForm.value;
@@ -49,12 +66,14 @@ export class RegisterComponent implements OnInit {
       this.authService.crearUsuario(nombre, correo, password)
         .then( credenciales => {
          // console.log(credenciales);
-          Swal.close();
+          // Swal.close();
+          this.store.dispatch(ui.stopLoading());
           this.router.navigate(['/']);
         })
         .catch( err => {
        //   console.error(err);
-          Swal.close();
+          // Swal.close();
+          this.store.dispatch(ui.stopLoading());
           Swal.fire({
             icon: 'error',
             title: 'Ingresos y Egresos',
