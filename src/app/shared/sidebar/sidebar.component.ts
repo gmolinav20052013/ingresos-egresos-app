@@ -32,7 +32,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-   this.sidebarSub.unsubscribe();
+   this.sidebarSub?.unsubscribe();
   }
 
 

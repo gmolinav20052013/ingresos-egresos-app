@@ -1,10 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { AppState } from 'src/app/app.reducer';
+import { AppStateWithIngreso } from '../ingreso-egreso.reducer';
+//import { AppState } from 'src/app/app.reducer';
 import { IngresoEgreso } from '../../models/ingreso-egreso.model';
 import { ChartType } from 'chart.js';
 import { MultiDataSet, Label } from 'ng2-charts';
 import { Subscription } from 'rxjs';
+
 
 
 @Component({
@@ -28,7 +30,7 @@ export class EstadisticaComponent implements OnInit, OnDestroy {
   public doughnutChartType: ChartType = 'doughnut';
 
 
-  constructor(private store: Store<AppState>) { }
+  constructor(private store: Store<AppStateWithIngreso>) { }
 
   ngOnInit(): void {
 
@@ -37,7 +39,7 @@ export class EstadisticaComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-      this.estadisticaSub.unsubscribe();
+      this.estadisticaSub?.unsubscribe();
     }
 
 
